@@ -7,7 +7,7 @@
              * Counries
              */
             'country' => [
-                'model' => \Illuminate\Database\Eloquent\Model::class,
+                'model' => null,
                 'name_field' => 'name',
                 'sign_field' => 'sign',
                 'lardi_trans_id_field' => 'lardi_trans_id'
@@ -16,7 +16,7 @@
              * Areas
              */
             'region' => [
-                'model' => \Illuminate\Database\Eloquent\Model::class,
+                'model' => null,
                 'name_field' => 'name',
                 'lardi_trans_id_field' => 'lardi_trans_id',
                 'country_relation_method' => 'country'
@@ -25,7 +25,7 @@
              * Cities
              */
             'city' => [
-                'model' => \Illuminate\Database\Eloquent\Model::class,
+                'model' => null,
                 'name_field' => 'name',
                 'lardi_trans_id_field' => 'lardi_trans_id',
                 'latitude_field' => 'latitude',
