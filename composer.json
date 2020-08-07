@@ -1,0 +1,14 @@
+{
+    "name": "laurel/lardi-trans",
+    "description": "Adapter for lardi-trans api",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Prokhorenko Vladyslav",
+            "email": "random.person.1907@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {}
+}
