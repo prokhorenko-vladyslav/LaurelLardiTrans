@@ -3,6 +3,7 @@
 namespace Laurel\LardiTrans\App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Laurel\LardiTrans\App\Console\Commands\LardiFetchCountries;
 
 class LardiTransServiceProvider extends ServiceProvider
 {
@@ -13,6 +14,9 @@ class LardiTransServiceProvider extends ServiceProvider
      */
     public function register()
     {
+        $this->commands([
+            LardiFetchCountries::class
+        ]);
         $this->mergeConfigFrom(__DIR__ . '/../../config/lardi_trans.php', 'laurel.lardi_trans');
         $this->publishes([
             __DIR__ . '/../../config/lardi_trans.php' => config_path('laurel/lardi_trans.php')
