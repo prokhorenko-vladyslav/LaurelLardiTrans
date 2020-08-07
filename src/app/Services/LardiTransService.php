@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Prophecy\Exception\Doubler\ClassNotFoundException;
 use Psy\Exception\TypeErrorException;
 
 /**
@@ -82,15 +83,13 @@ class LardiTransService
      *
      * @param $modelAlias
      * @param $modelClass
-     * @throws TypeErrorException
      */
     protected function loadSingleModel($modelAlias, $modelClass)
     {
         if (
-            !class_exists($modelClass) ||
-            !(new $modelClass) instanceof Model
+            !class_exists($modelClass)
         ) {
-            throw new TypeErrorException("Class \"{$modelClass}\" is not instance of " . Model::class);
+            throw new ClassNotFoundException("Class \"{$modelClass}\" has not been found", $modelClass);
         } else {
             $this->$modelAlias = $modelClass;
         }
