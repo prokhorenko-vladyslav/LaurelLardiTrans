@@ -322,6 +322,9 @@ class LardiTransService
 
         if ($response->ok()) {
             return $response->json();
+        } elseif (intval($response->status()) === 429) {
+            throw new \Exception("Too many requests");
+            return [];
         } else {
             Log::error("Lardi trans api has returned " . $response->status(), [
                 'api_url' => $this->apiUrl . $route,
