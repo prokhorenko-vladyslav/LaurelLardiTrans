@@ -2,6 +2,7 @@
 
 namespace Laurel\LardiTrans\App\Services;
 
+use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
@@ -69,7 +70,6 @@ class LardiTransService
     /**
      * Loads names of the model classes from config
      *
-     * @throws TypeErrorException
      */
     protected function loadModels()
     {
@@ -101,17 +101,32 @@ class LardiTransService
      * @param array $signs
      * @param string|null $language
      * @return Collection
+     * @throws Exception
      */
     public function fetchCountries(array $signs = [], ?string $language = null) : Collection
     {
         $language = $language ?? App::getLocale();
+        $signField = config('laurel.lardi_trans.models.country.sign_field');
 
-        $predictions = $this->sendLardiRequest('countries', [
-            'signs' => implode(", ", $signs),
-            'language' => $language
-        ]);
+        $countries = collect([]);
+        foreach ($signs as $signIndex => $sign) {
+            $country = $this->countryModel::where($signField, $sign)->first();
+            if ($country) {
+                $countries->push($country);
+                unset($signs[$signIndex]);
+            }
+        }
 
-        return $this->saveCountryPredictions($predictions);
+        if (!empty($signs)) {
+            $predictions = $this->sendLardiRequest('countries', [
+                'signs' => implode(", ", $signs),
+                'language' => $language
+            ]);
+            $predictedCountries = $this->saveCountryPredictions($predictions);
+            $countries->merge($predictedCountries);
+        }
+
+        return $countries;
     }
 
     /**
@@ -160,6 +175,7 @@ class LardiTransService
      * @param array $ids
      * @param string|null $language
      * @return Collection
+     * @throws Exception
      */
     public function fetchRegions(array $ids = [], ?string $language = null)
     {
@@ -198,6 +214,7 @@ class LardiTransService
      *
      * @param $prediction
      * @return Model|null
+     * @throws Exception
      */
     protected function saveSaveSingleRegion(array $prediction) : ?Model
     {
@@ -228,6 +245,7 @@ class LardiTransService
      * @param int $queryLimit
      * @param string|null $language
      * @return Collection
+     * @throws Exception
      */
     public function autocompleteCity(string $query, int $queryLimit = 10, ?string $language = null)
     {
@@ -283,9 +301,6 @@ class LardiTransService
         }
 
         $region = $this->fetchRegions([$prediction['areaId']])->first();
-        if (!$region) {
-            return null;
-        }
 
         $city = $this->cityModel::firstOrNew([
             $lardiTransIdField => $prediction['id']
@@ -293,7 +308,9 @@ class LardiTransService
         $city->$nameField = $prediction['name'];
         $city->$lardiTransIdField = $prediction['id'];
         $city->$countryRelationMethod()->associate($country);
-        $city->$regionRelationMethod()->associate($region);
+        if ($region) {
+            $city->$regionRelationMethod()->associate($region);
+        }
         if (!empty($latitudeField)) {
             $city->$latitudeField = $prediction['lat'];
         }
@@ -323,7 +340,7 @@ class LardiTransService
         if ($response->ok()) {
             return $response->json();
         } elseif (intval($response->status()) === 429) {
-            throw new \Exception("Too many requests");
+            throw new Exception("Too many requests");
             return [];
         } else {
             Log::error("Lardi trans api has returned " . $response->status(), [
