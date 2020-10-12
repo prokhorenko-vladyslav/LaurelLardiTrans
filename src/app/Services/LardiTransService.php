@@ -71,8 +71,23 @@ class LardiTransService
     {
         $this->apiToken = config('laurel.lardi_trans.api_token');
         $this->apiUrl = config('laurel.lardi_trans.api_url');
+    }
 
-        $this->loadModels();
+    /**
+     * Returns true, if models for package has been loaded
+     *
+     * @return bool
+     */
+    protected function isModelLoaded() : bool
+    {
+        return $this->models_loaded;
+    }
+
+    protected function loadModelsIfNotLoaded()
+    {
+        if (!$this->isModelLoaded()) {
+            $this->loadModels();
+        }
     }
 
     /**
@@ -114,6 +129,7 @@ class LardiTransService
      */
     public function fetchCountries(array $signs = [], ?string $language = null) : Collection
     {
+        $this->loadModelsIfNotLoaded();
         $language = $language ?? App::getLocale();
         $signField = config('laurel.lardi_trans.models.country.sign_field');
 
@@ -188,6 +204,7 @@ class LardiTransService
      */
     public function fetchRegions(array $ids = [], ?string $language = null)
     {
+        $this->loadModelsIfNotLoaded();
         $language = $language ?? App::getLocale();
 
         $predictions = $this->sendLardiRequest('areas', [
@@ -258,6 +275,7 @@ class LardiTransService
      */
     public function autocompleteCity(string $query, int $queryLimit = 10, ?string $language = null)
     {
+        $this->loadModelsIfNotLoaded();
         $language = $language ?? App::getLocale();
 
         if (is_numeric($query)) {
@@ -360,6 +378,7 @@ class LardiTransService
      * @param string $route
      * @param array $parameters
      * @return array
+     * @throws Exception
      */
     public function sendLardiRequest(string $route, array $parameters) : array
     {
