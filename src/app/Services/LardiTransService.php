@@ -366,6 +366,7 @@ class LardiTransService
         $response = Http::withHeaders([
             'Authorization' => $this->apiToken
         ])->get($this->apiUrl . $route, $parameters);
+        Log::info('Lardi request: ' . $route);
 
         if ($response->ok()) {
             return $response->json();
