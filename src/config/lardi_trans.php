@@ -4,7 +4,7 @@
         'api_url' => 'https://api.lardi-trans.com/v2/references/',
         'models' => [
             /**
-             * Counries
+             * Countries
              */
             'country' => [
                 'model' => null,
@@ -32,6 +32,14 @@
                 'longitude_field' => 'longitude',
                 'country_relation_method' => 'country',
                 'region_relation_method' => 'region'
+            ],
+            /**
+             * PostCodes
+             */
+            'post_code' => [
+                'model' => null,
+                'name_field' => 'name',
+                'city_relation_method' => 'city',
             ],
         ]
     ];

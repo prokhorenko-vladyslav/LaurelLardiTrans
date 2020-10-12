@@ -2,12 +2,14 @@
 
 namespace Laurel\LardiTrans\App\Services;
 
+use App\Models\Location\PostCode;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Prophecy\Exception\Doubler\ClassNotFoundException;
 use Psy\Exception\TypeErrorException;
 
@@ -40,7 +42,6 @@ class LardiTransService
      */
     protected $countryModel;
 
-
     /**
      * Classname of the region model (area in the LardiApi)
      *
@@ -55,6 +56,13 @@ class LardiTransService
      * @var string
      */
     protected $cityModel;
+
+    /**
+     * Classname of the post code model
+     *
+     * @var string
+     */
+    protected $postCodeModel;
 
     /**
      * LardiTransService constructor.
@@ -76,6 +84,7 @@ class LardiTransService
         $this->loadSingleModel('countryModel', config('laurel.lardi_trans.models.country.model'));
         $this->loadSingleModel('regionModel', config('laurel.lardi_trans.models.region.model'));
         $this->loadSingleModel('cityModel', config('laurel.lardi_trans.models.city.model'));
+        $this->loadSingleModel('postCodeModel', config('laurel.lardi_trans.models.post_code.model'));
     }
 
     /**
@@ -251,11 +260,19 @@ class LardiTransService
     {
         $language = $language ?? App::getLocale();
 
-        $predictions = $this->sendLardiRequest('towns', [
-            'query' => $query,
-            'queryLimit' => $queryLimit,
-            'language' => $language
-        ]);
+        if (is_numeric($query)) {
+            $predictions = $this->sendLardiRequest('towns/by/postcode', [
+                'query' => $query,
+                'queryLimit' => $queryLimit,
+                'language' => $language
+            ]);
+        } else {
+            $predictions = $this->sendLardiRequest('towns', [
+                'query' => $query,
+                'queryLimit' => $queryLimit,
+                'language' => $language
+            ]);
+        }
 
         return $this->saveCityPredictions($predictions);
     }
@@ -294,6 +311,7 @@ class LardiTransService
         $lardiTransIdField = config('laurel.lardi_trans.models.city.lardi_trans_id_field');
         $countryRelationMethod = config('laurel.lardi_trans.models.city.country_relation_method');
         $regionRelationMethod = config('laurel.lardi_trans.models.city.region_relation_method');
+        $postCodeCityRelationMethod = config('laurel.lardi_trans.models.post_code.city_relation_method');
 
         $country = $this->fetchCountries([$prediction['countrySign']])->first();
         if (!$country) {
@@ -320,6 +338,18 @@ class LardiTransService
         }
 
         $city->save();
+
+        if (!empty($prediction['postcode']) && is_array($prediction['postcode'])) {
+            foreach ($prediction['postcode'] as $postcode) {
+                $postCodeObj = new PostCode([
+                    'name' => $postcode,
+                    'slug' => Str::slug($postcode),
+                    'google_id' => microtime(true)
+                ]);
+                $postCodeObj->$postCodeCityRelationMethod()->associate($city);
+                $postCodeObj->save();
+            }
+        }
 
         return $city;
     }
