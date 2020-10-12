@@ -363,19 +363,35 @@ class LardiTransService
 
         $city->save();
 
-        if (!empty($prediction['postcode']) && is_array($prediction['postcode'])) {
-            foreach ($prediction['postcode'] as $postcode) {
-                $postCodeObj = new PostCode([
-                    'name' => $postcode,
-                    'slug' => Str::slug($postcode),
-                    'google_id' => microtime(true)
-                ]);
-                $postCodeObj->$postCodeCityRelationMethod()->associate($city);
-                $postCodeObj->save();
-            }
+        if (empty($prediction['postcode']) || is_array($prediction['postcode'])) {
+            $prediction['postcode'] = $this->fetchPostCodesByCityId($city->$lardiTransIdField);
+        }
+
+        foreach ($prediction['postcode'] as $postcode) {
+            $postCodeObj = new PostCode([
+                'name' => $postcode,
+                'slug' => Str::slug($postcode),
+                'google_id' => microtime(true)
+            ]);
+            $postCodeObj->$postCodeCityRelationMethod()->associate($city);
+            $postCodeObj->save();
         }
 
         return $city;
+    }
+
+    public function fetchPostCodesByCityId(int $lardiTransId)
+    {
+        $cities = $this->sendLardiRequest('towns/by/ids', [
+            'language' => 'ru',
+            'ids' => $lardiTransId
+        ]);
+
+        if (!empty($cities[0]['postcode'])) {
+            return $cities[0]['postcode'];
+        } else {
+            return [];
+        }
     }
 
     /**
