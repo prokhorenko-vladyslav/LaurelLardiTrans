@@ -65,6 +65,11 @@ class LardiTransService
     protected $postCodeModel;
 
     /**
+     * Is model loaded or not
+     */
+    protected $models_loaded = false;
+
+    /**
      * LardiTransService constructor.
      */
     public function __construct()
@@ -87,6 +92,7 @@ class LardiTransService
     {
         if (!$this->isModelLoaded()) {
             $this->loadModels();
+            $this->models_loaded = true;
         }
     }
 
@@ -111,7 +117,7 @@ class LardiTransService
     protected function loadSingleModel($modelAlias, $modelClass)
     {
         if (
-            !class_exists($modelClass)
+        !class_exists($modelClass)
         ) {
             throw new ClassNotFoundException("Class \"{$modelClass}\" has not been found", $modelClass);
         } else {
