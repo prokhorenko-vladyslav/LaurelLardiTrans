@@ -377,6 +377,10 @@ class LardiTransService
             $postCodeObj->save();
         }
 
+        if (method_exists($city, 'index')) {
+            $city->index();
+        }
+
         return $city;
     }
 
